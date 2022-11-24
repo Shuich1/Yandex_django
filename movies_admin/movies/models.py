@@ -43,21 +43,33 @@ class Filmwork(UUIDMixin, TimeStampedMixin):
     description = models.TextField(blank=True, verbose_name=_('Description'))
     creation_date = models.DateField(verbose_name=_('Creation date'))
     rating = models.FloatField(
-        verbose_name=_('Rating'), 
-        blank=True, 
+        verbose_name=_('Rating'),
+        blank=True,
         validators=[
-            MinValueValidator(0), 
+            MinValueValidator(0),
             MaxValueValidator(100)
         ]
     )
+    certificate = models.CharField(
+        max_length=512,
+        verbose_name=_('Certificate'),
+        blank=True
+    )
+    file_path = models.FileField(
+        max_length=255,
+        verbose_name=_('File path'),
+        blank=True,
+        null=True,
+        upload_to='movies/'
+    )
 
-    class TypeChoices(models.TextChoices):
+    class Type(models.TextChoices):
         MOVIE = 'MOVIE', _('Movie')
         TV_SHOW = 'TV_SHOW', _('TV Show')
 
     type = models.CharField(
         max_length=7,
-        choices=TypeChoices.choices,
+        choices=Type.choices,
         verbose_name=_('Type'),
     )
 
@@ -71,15 +83,26 @@ class Filmwork(UUIDMixin, TimeStampedMixin):
 
 
 class GenreFilmwork(UUIDMixin):
-    film_work = models.ForeignKey('Filmwork', on_delete=models.CASCADE, verbose_name=_('Filmwork'))
-    genre = models.ForeignKey('Genre', on_delete=models.CASCADE, verbose_name=_('Genre'))
-    created = models.DateTimeField(auto_now_add=True, verbose_name=_('Created'))
+    film_work = models.ForeignKey(
+        'Filmwork',
+        on_delete=models.CASCADE,
+        verbose_name=_('Filmwork')
+    )
+    genre = models.ForeignKey(
+        'Genre',
+        on_delete=models.CASCADE,
+        verbose_name=_('Genre')
+    )
+    created = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_('Created')
+    )
 
     class Meta:
         db_table = "content\".\"genre_film_work"
         verbose_name = _('Genre of Filmwork')
         verbose_name_plural = _('Genres of Filmwork')
-    
+
     def __str__(self):
         return f'{self.film_work.title} - {self.genre.name}'
 
@@ -97,10 +120,24 @@ class Person(UUIDMixin, TimeStampedMixin):
 
 
 class PersonFilmwork(UUIDMixin):
-    film_work = models.ForeignKey('Filmwork', on_delete=models.CASCADE, verbose_name=_('Filmwork'))
-    person = models.ForeignKey('Person', on_delete=models.CASCADE, verbose_name=_('Person'))
-    role = models.CharField(max_length=255, verbose_name=_('Role'))
-    created = models.DateTimeField(auto_now_add=True, verbose_name=_('Created'))
+    film_work = models.ForeignKey(
+        'Filmwork',
+        on_delete=models.CASCADE,
+        verbose_name=_('Filmwork')
+    )
+    person = models.ForeignKey(
+        'Person',
+        on_delete=models.CASCADE,
+        verbose_name=_('Person')
+    )
+    role = models.CharField(
+        max_length=255,
+        verbose_name=_('Role')
+    )
+    created = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_('Created')
+    )
 
     class Meta:
         db_table = "content\".\"person_film_work"
