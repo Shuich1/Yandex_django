@@ -19,5 +19,4 @@ include(
     'components/common.py',
     'components/database.py',
     'components/internationalization.py',
-    'components/static_files.py',
 )
