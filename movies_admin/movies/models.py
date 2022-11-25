@@ -50,11 +50,7 @@ class Filmwork(UUIDMixin, TimeStampedMixin):
             MaxValueValidator(100)
         ]
     )
-    certificate = models.CharField(
-        max_length=512,
-        verbose_name=_('Certificate'),
-        blank=True
-    )
+
     file_path = models.FileField(
         max_length=255,
         verbose_name=_('File path'),
@@ -132,7 +128,7 @@ class PersonFilmwork(UUIDMixin):
     )
     role = models.CharField(
         max_length=255,
-        verbose_name=_('Role')
+        verbose_name=_('Role'),
     )
     created = models.DateTimeField(
         auto_now_add=True,
