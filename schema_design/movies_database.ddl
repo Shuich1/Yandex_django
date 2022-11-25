@@ -46,9 +46,5 @@ CREATE TABLE IF NOT EXISTS content.genre_film_work (
 );
 
 CREATE INDEX IF NOT EXISTS film_work_creation_date_idx ON content.film_work (creation_date);
-CREATE UNIQUE INDEX IF NOT EXISTS film_work_person_idx ON content.person_film_work (film_work_id, person_id);
-CREATE UNIQUE INDEX IF NOT EXISTS film_work_genre_idx ON content.genre_film_work (film_work_id, genre_id);
-CREATE INDEX IF NOT EXISTS person_film_work_film_work_id_idx ON content.person_film_work (film_work_id);
-CREATE INDEX IF NOT EXISTS person_film_work_person_id_idx ON content.person_film_work (person_id);
-CREATE INDEX IF NOT EXISTS genre_film_work_film_work_id_idx ON content.genre_film_work (film_work_id);
-CREATE INDEX IF NOT EXISTS genre_film_work_genre_id_idx ON content.genre_film_work (genre_id);
+CREATE INDEX IF NOT EXISTS person_film_work_idx ON content.person_film_work (person_id, film_work_id);
+CREATE UNIQUE INDEX IF NOT EXISTS genre_film_work_idx ON content.genre_film_work (genre_id, film_work_id);
