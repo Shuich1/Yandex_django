@@ -1,4 +1,5 @@
 from classes import Genre, Person, Filmwork, GenreFilmwork, PersonFilmwork
+import sqlite3
 
 
 class SQLiteExtractor:
@@ -8,6 +9,7 @@ class SQLiteExtractor:
         self.data = {}
 
     def extract_all(self):
+        """Метод для извлечения всех данных из SQLite"""
         self.extract_genres()
         self.extract_persons()
         self.extract_film_works()
@@ -17,7 +19,12 @@ class SQLiteExtractor:
         return self.data
 
     def extract_genres(self):
-        self.cursor.execute('SELECT * FROM genre')
+        """Метод для извлечения жанров из SQLite"""
+        try:
+            self.cursor.execute('SELECT * FROM genre')
+        except sqlite3.OperationalError:
+            print('Таблица genre не найдена')
+
         genres = []
         for row in self.cursor.fetchall():
             genre = Genre(
@@ -31,7 +38,12 @@ class SQLiteExtractor:
         self.data['genres'] = genres
 
     def extract_persons(self):
-        self.cursor.execute('SELECT * FROM person')
+        """Метод для извлечения персон из SQLite"""
+        try:
+            self.cursor.execute('SELECT * FROM person')
+        except sqlite3.OperationalError:
+            print('Таблица person не найдена')
+
         persons = []
         for row in self.cursor.fetchall():
             person = Person(
@@ -44,12 +56,17 @@ class SQLiteExtractor:
         self.data['persons'] = persons
 
     def extract_film_works(self):
-        self.cursor.execute('SELECT * FROM film_work')
+        """Метод для извлечения фильмов из SQLite"""
+        try:
+            self.cursor.execute('SELECT * FROM film_work')
+        except sqlite3.OperationalError:
+            print('Таблица film_work не найдена')
+
         filmworks = []
         for row in self.cursor.fetchall():
             filmwork = Filmwork(
                 title=row[1],
-                description=str(row[2]).replace('\"', '\''),
+                description=row[2],
                 creation_date=row[3],
                 file_path=row[4],
                 type=row[6],
@@ -62,7 +79,12 @@ class SQLiteExtractor:
         self.data['film_works'] = filmworks
 
     def extract_genre_film_works(self):
-        self.cursor.execute('SELECT * FROM genre_film_work')
+        """Метод для извлечения жанров фильмов из SQLite"""
+        try:
+            self.cursor.execute('SELECT * FROM genre_film_work')
+        except sqlite3.OperationalError:
+            print('Таблица genre_film_work не найдена')
+
         genre_filmworks = []
         for row in self.cursor.fetchall():
             genre_filmwork = GenreFilmwork(
@@ -75,7 +97,12 @@ class SQLiteExtractor:
         self.data['genre_film_works'] = genre_filmworks
 
     def extract_person_film_works(self):
-        self.cursor.execute('SELECT * FROM person_film_work')
+        """Метод для извлечения персон фильмов из SQLite"""
+        try:
+            self.cursor.execute('SELECT * FROM person_film_work')
+        except sqlite3.OperationalError:
+            print('Таблица person_film_work не найдена')
+
         person_filmworks = []
         for row in self.cursor.fetchall():
             person_filmwork = PersonFilmwork(

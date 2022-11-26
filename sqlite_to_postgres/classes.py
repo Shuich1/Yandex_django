@@ -2,7 +2,7 @@ import uuid
 from dataclasses import dataclass, field
 
 
-@dataclass
+@dataclass(frozen=True)
 class Genre:
     name: str
     description: str
@@ -11,7 +11,7 @@ class Genre:
     id: uuid.UUID = field(default_factory=uuid.uuid4)
 
 
-@dataclass
+@dataclass(frozen=True)
 class Person:
     full_name: str
     created: str
@@ -19,7 +19,7 @@ class Person:
     id: uuid.UUID = field(default_factory=uuid.uuid4)
 
 
-@dataclass
+@dataclass(frozen=True)
 class Filmwork:
     title: str
     description: str
@@ -32,7 +32,7 @@ class Filmwork:
     id: uuid.UUID = field(default_factory=uuid.uuid4)
 
 
-@dataclass
+@dataclass(frozen=True)
 class GenreFilmwork:
     created: str
     id: uuid.UUID = field(default_factory=uuid.uuid4)
@@ -40,7 +40,7 @@ class GenreFilmwork:
     film_work_id: uuid.UUID = field(default_factory=uuid.uuid4)
 
 
-@dataclass
+@dataclass(frozen=True)
 class PersonFilmwork:
     role: str
     created: str

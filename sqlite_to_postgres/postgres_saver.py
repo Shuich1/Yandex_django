@@ -1,107 +1,133 @@
-import io
+from psycopg2.extensions import connection as _connection
+from tqdm import tqdm
+import time
 
 
 class PostgresSaver:
-    def __init__(self, connection, data):
+    def __init__(self, connection: _connection, data: dict):
         self.connection = connection
-        self.data = data
         self.cursor = connection.cursor()
 
+        self.data = data
+
     def save_all(self):
+        """Метод для сохранения всех данных в базу данных Postgres"""
         self.save_genres()
-        self.save_persons()
-        self.save_film_works()
-        self.save_genre_film_works()
-        self.save_person_film_works()
+        self.save_persons(pack_size=400)
+        self.save_film_works(pack_size=500)
+        self.save_genre_film_works(pack_size=500)
+        self.save_person_film_works(pack_size=1000)
         self.connection.commit()
 
-    def save_genres(self):
-        data_for_copy = io.StringIO()
-        for genre in self.data['genres']:
-            data_for_copy.write(
-                f'{genre.id},'
-                f'{genre.name},'
-                f'{genre.description},'
-                f'{genre.created},'
-                f'{genre.modified}\n'
+    def pack_saver(self, pack_size, counter):
+        """Метод для сохранения пакетов данных в базу данных Postgres"""
+        counter += 1
+        if counter < pack_size:
+            return counter
+        self.connection.commit()
+        time.sleep(0.5)
+        return 0
+
+    def save_genres(self, pack_size=100):
+        """Метод для сохранения жанров в базу данных Postgres"""
+        counter = 0
+        for genre in tqdm(self.data['genres']):
+            query = self.cursor.mogrify("""
+                INSERT INTO content.genre
+                (id, name, description, created, modified)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (id) DO NOTHING
+                """, (
+                    genre.id,
+                    genre.name,
+                    genre.description,
+                    genre.created,
+                    genre.modified
+                )
             )
+            self.cursor.execute(query)
+            counter = self.pack_saver(pack_size, counter)
 
-        data_for_copy.seek(0)
+    def save_persons(self, pack_size=100):
+        """Метод для сохранения персон в базу данных Postgres"""
+        counter = 0
+        for person in tqdm(self.data['persons']):
+            query = self.cursor.mogrify("""
+                INSERT INTO content.person
+                (id, full_name, created, modified)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (id) DO NOTHING
+                """, (
+                    person.id,
+                    person.full_name,
+                    person.created,
+                    person.modified
+                    )
+                )
+            self.cursor.execute(query)
+            counter = self.pack_saver(pack_size, counter)
 
-        self.cursor.copy_expert(
-            "COPY content.genre FROM stdin csv NULL 'None'",
-            data_for_copy
-        )
-        self.cursor.execute("select count(*) from content.genre")
-
-    def save_persons(self):
-        data_for_copy = io.StringIO()
-        for person in self.data['persons']:
-            data_for_copy.write(
-                f'{person.id},'
-                f'{person.full_name},'
-                f'{person.created},'
-                f'{person.modified}\n'
+    def save_film_works(self, pack_size=100):
+        """Метод для сохранения фильмов в базу данных Postgres"""
+        counter = 0
+        for film_work in tqdm(self.data['film_works']):
+            query = self.cursor.mogrify("""
+                INSERT INTO content.film_work
+                (id, title, description, creation_date,
+                rating, type, created, modified, file_path)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (id) DO NOTHING
+                """, (
+                    film_work.id,
+                    film_work.title,
+                    film_work.description,
+                    film_work.creation_date,
+                    film_work.rating,
+                    film_work.type,
+                    film_work.created,
+                    film_work.modified,
+                    film_work.file_path
+                    )
             )
+            self.cursor.execute(query)
+            counter = self.pack_saver(pack_size, counter)
 
-        data_for_copy.seek(0)
-
-        self.cursor.copy_expert(
-            "COPY content.person FROM stdin csv NULL 'None'",
-            data_for_copy
-        )
-        self.cursor.execute("select count(*) from content.person")
-
-    def save_film_works(self):
-        data_for_copy = io.StringIO()
-        for film_work in self.data['film_works']:
-            data_for_copy.write(
-                f'{film_work.id}|'
-                f'{film_work.title}|'
-                f'{film_work.description}|'
-                f'{film_work.creation_date}|'
-                f'{film_work.rating}|'
-                f'{film_work.type}|'
-                f'{film_work.created}|'
-                f'{film_work.modified}|'
-                f'{film_work.file_path}\n'
+    def save_genre_film_works(self, pack_size=100):
+        """Метод для сохранения жанров фильмов в базу данных Postgres"""
+        counter = 0
+        for genre_film_work in tqdm(self.data['genre_film_works']):
+            query = self.cursor.mogrify("""
+                INSERT INTO content.genre_film_work
+                (id, genre_id, film_work_id, created)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (id) DO NOTHING
+                """, (
+                    genre_film_work.id,
+                    genre_film_work.genre_id,
+                    genre_film_work.film_work_id,
+                    genre_film_work.created
+                    )
             )
+            self.cursor.execute(query)
+            self.connection.commit()
+            counter = self.pack_saver(pack_size, counter)
 
-        data_for_copy.seek(0)
-        self.cursor.copy_expert(
-            "COPY content.film_work FROM stdin csv delimiter '|' NULL 'None'",
-            data_for_copy
-        )
-
-    def save_genre_film_works(self):
-        data_for_copy = io.StringIO()
-        for genre_film_work in self.data['genre_film_works']:
-            data_for_copy.write(
-                f'{genre_film_work.id},'
-                f'{genre_film_work.genre_id},'
-                f'{genre_film_work.film_work_id},'
-                f'{genre_film_work.created}\n'
+    def save_person_film_works(self, pack_size=100):
+        """Метод для сохранения персон фильмов в базу данных Postgres"""
+        counter = 0
+        for person_film_work in tqdm(self.data['person_film_works']):
+            query = self.cursor.mogrify("""
+                INSERT INTO content.person_film_work
+                (id, person_id, film_work_id, role, created)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (id) DO NOTHING
+                """, (
+                    person_film_work.id,
+                    person_film_work.person_id,
+                    person_film_work.film_work_id,
+                    person_film_work.role,
+                    person_film_work.created
+                    )
             )
-
-        data_for_copy.seek(0)
-        self.cursor.copy_expert(
-            "COPY content.genre_film_work FROM stdin csv NULL 'None'",
-            data_for_copy
-        )
-
-    def save_person_film_works(self):
-        data_for_copy = io.StringIO()
-        for person_film_work in self.data['person_film_works']:
-            data_for_copy.write(
-                f'{person_film_work.id},'
-                f'{person_film_work.person_id},'
-                f'{person_film_work.film_work_id},'
-                f'{person_film_work.role},'
-                f'{person_film_work.created}\n'
-            )
-
-        data_for_copy.seek(0)
-        self.cursor.copy_expert(
-            "COPY content.person_film_work FROM stdin csv NULL 'None'",
-            data_for_copy
-        )
+            self.cursor.execute(query)
+            counter = self.pack_saver(pack_size, counter)
