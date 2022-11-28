@@ -42,6 +42,13 @@ class Filmwork(UUIDMixin, TimeStampedMixin):
     title = models.CharField(max_length=255, verbose_name=_('Title'))
     description = models.TextField(blank=True, verbose_name=_('Description'))
     creation_date = models.DateField(verbose_name=_('Creation date'))
+    file_path = models.FileField(
+        max_length=255,
+        verbose_name=_('File path'),
+        blank=True,
+        null=True,
+        upload_to='movies/'
+    )
     rating = models.FloatField(
         verbose_name=_('Rating'),
         blank=True,
@@ -49,14 +56,6 @@ class Filmwork(UUIDMixin, TimeStampedMixin):
             MinValueValidator(0),
             MaxValueValidator(100)
         ]
-    )
-
-    file_path = models.FileField(
-        max_length=255,
-        verbose_name=_('File path'),
-        blank=True,
-        null=True,
-        upload_to='movies/'
     )
 
     class Type(models.TextChoices):
@@ -73,6 +72,9 @@ class Filmwork(UUIDMixin, TimeStampedMixin):
         db_table = "content\".\"film_work"
         verbose_name = _('Filmwork')
         verbose_name_plural = _('Filmworks')
+        indexes = [
+            models.Index(fields=['creation_date'], name='film_work_creation_date_idx'),
+        ]
 
     def __str__(self):
         return self.title
@@ -98,6 +100,12 @@ class GenreFilmwork(UUIDMixin):
         db_table = "content\".\"genre_film_work"
         verbose_name = _('Genre of Filmwork')
         verbose_name_plural = _('Genres of Filmwork')
+        constraints = [
+            models.UniqueConstraint(fields=['genre', 'film_work'], name='genre_film_work_genre_id_film_work_id_uniq')
+        ]
+        indexes = [
+            models.Index(fields=['genre', 'film_work'], name='genre_film_work_genre_id_film_work_id_idx'),
+        ]
 
     def __str__(self):
         return f'{self.film_work.title} - {self.genre.name}'
@@ -126,9 +134,16 @@ class PersonFilmwork(UUIDMixin):
         on_delete=models.CASCADE,
         verbose_name=_('Person')
     )
+
+    class Role(models.TextChoices):
+        DIRECTOR = 'DIRECTOR', _('Director')
+        ACTOR = 'ACTOR', _('Actor')
+        WRITER = 'WRITER', _('Writer')
+
     role = models.CharField(
         max_length=255,
         verbose_name=_('Role'),
+        choices=Role.choices,
     )
     created = models.DateTimeField(
         auto_now_add=True,
@@ -139,6 +154,12 @@ class PersonFilmwork(UUIDMixin):
         db_table = "content\".\"person_film_work"
         verbose_name = _('Person of Filmwork')
         verbose_name_plural = _('Persons of Filmwork')
+        constraints = [
+            models.UniqueConstraint(fields=['person', 'film_work', 'role'], name='person_film_work_person_id_film_work_id_role_uniq')
+        ]
+        indexes = [
+            models.Index(fields=['person', 'film_work', 'role'], name='person_film_work_person_id_film_work_id_role_idx'),
+        ]
 
     def __str__(self):
         return self.role
