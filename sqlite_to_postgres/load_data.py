@@ -2,21 +2,83 @@ import sqlite3
 
 import psycopg2
 from psycopg2.extensions import connection as _connection
-from psycopg2.extras import DictCursor
 
 from dotenv import load_dotenv
+from contextlib import contextmanager
 import os
+import logging
+import logging.config
+import time
 
 from sqlite_extractor import SQLiteExtractor
 from postgres_saver import PostgresSaver
 
 
+LOGGING_CONFIG = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'default': {
+            'format': '[%(asctime)s] %(levelname)s %(message)s',
+            'datefmt': '%Y.%m.%d %H:%M:%S'
+        },
+    },
+    'handlers': {
+        'log_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': f'logs/{time.strftime("%Y-%m-%d %H:%M:%S")}.log',
+            'formatter': 'default',
+        },
+     },
+    'loggers': {
+        '': {
+            'handlers': ['log_file'],
+            'level': 'INFO',
+            'propagate': True
+        },
+     },
+}
+
+logging.config.dictConfig(LOGGING_CONFIG)
+logger = logging.getLogger(__name__)
+
+
+@contextmanager
+def sqlite_connection(db_path: str) -> sqlite3.Connection:
+    """Контекстный менеджер для работы с SQLite"""
+    conn = sqlite3.connect(db_path)
+    logger.info('SQLite connection opened')
+    try:
+        yield conn
+    except sqlite3.Error:
+        logger.exception('SQLite connection error')
+    finally:
+        conn.close()
+        logger.info('Connection to SQLite closed')
+
+
+@contextmanager
+def postgres_connection(dsl) -> _connection:
+    """Контекстный менеджер для работы с Postgres"""
+    conn = psycopg2.connect(**dsl)
+    logger.info('Postgres connection opened')
+    try:
+        yield conn
+    except psycopg2.Error:
+        logger.exception('Postgres connection error')
+    finally:
+        conn.close()
+        logger.info('Connection to Postgres closed')
+
+
 def load_from_sqlite(connection: sqlite3.Connection, pg_conn: _connection):
     """Основной метод загрузки данных из SQLite в Postgres"""
     sqlite_extractor = SQLiteExtractor(connection)
-    data = sqlite_extractor.extract_all()
-    postgres_saver = PostgresSaver(pg_conn, data)
-    postgres_saver.save_all()
+    postgres_saver = PostgresSaver(pg_conn)
+    postgres_saver.init_database()
+    for table_name, table_data in sqlite_extractor.extract_pack():
+        postgres_saver.save_pack(table_name, table_data)
 
 
 if __name__ == '__main__':
@@ -28,7 +90,6 @@ if __name__ == '__main__':
         'host': os.environ.get('DB_HOST'),
         'port': os.environ.get('DB_PORT')
     }
-    with sqlite3.connect(
-        os.environ.get('DB_SQLITE_PATH')) as sqlite_conn,\
-            psycopg2.connect(**dsl, cursor_factory=DictCursor) as pg_conn:
+    with sqlite_connection(os.environ.get('DB_SQLITE_PATH')) as sqlite_conn,\
+            postgres_connection(dsl) as pg_conn:
         load_from_sqlite(sqlite_conn, pg_conn)
