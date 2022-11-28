@@ -10,7 +10,7 @@ class SQLiteExtractor:
         self.logger = logging.getLogger(__name__)
 
     @contextmanager
-    def get_cursor(self):
+    def get_cursor(self) -> sqlite3.Cursor:
         """Метод для получения курсора"""
         cursor = self.connection.cursor()
         try:
