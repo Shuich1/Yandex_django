@@ -101,10 +101,10 @@ class GenreFilmwork(UUIDMixin):
         verbose_name = _('Genre of Filmwork')
         verbose_name_plural = _('Genres of Filmwork')
         constraints = [
-            models.UniqueConstraint(fields=['genre', 'film_work'], name='genre_film_work_genre_id_film_work_id_uniq')
+            models.UniqueConstraint(fields=['genre', 'film_work'], name='genre_id_film_work_id_uniq')
         ]
         indexes = [
-            models.Index(fields=['genre', 'film_work'], name='genre_film_work_genre_id_film_work_id_idx'),
+            models.Index(fields=['genre', 'film_work'], name='genre_id_film_work_id_idx'),
         ]
 
     def __str__(self):
@@ -155,10 +155,10 @@ class PersonFilmwork(UUIDMixin):
         verbose_name = _('Person of Filmwork')
         verbose_name_plural = _('Persons of Filmwork')
         constraints = [
-            models.UniqueConstraint(fields=['person', 'film_work', 'role'], name='person_film_work_person_id_film_work_id_role_uniq')
+            models.UniqueConstraint(fields=['person', 'film_work', 'role'], name='person_film_work_ids_role_uniq')
         ]
         indexes = [
-            models.Index(fields=['person', 'film_work', 'role'], name='person_film_work_person_id_film_work_id_role_idx'),
+            models.Index(fields=['person', 'film_work', 'role'], name='person_film_work_ids_role_idx'),
         ]
 
     def __str__(self):
