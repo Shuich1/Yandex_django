@@ -72,7 +72,10 @@ def postgres_connection(dsl) -> _connection:
         logger.info('Connection to Postgres closed')
 
 
-def load_from_sqlite(connection: sqlite3.Connection, pg_conn: _connection) -> None:
+def load_from_sqlite(
+    connection: sqlite3.Connection,
+    pg_conn: _connection
+        ) -> None:
     """Основной метод загрузки данных из SQLite в Postgres"""
     sqlite_extractor = SQLiteExtractor(connection)
     postgres_saver = PostgresSaver(pg_conn)
