@@ -133,6 +133,3 @@ dmypy.json
 .pyre/
 
 .python-version
-
-# flake8
-setup.cfg
