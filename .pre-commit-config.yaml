@@ -3,7 +3,7 @@ repos:
     hooks:
     -   id: flake8
         name: flake8
-        description: wemake-python-styleguide enforcement
+        description: flake8 linter
         entry: flake8
         args: ["--config=setup.cfg"]
         language: python
